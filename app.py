@@ -6,9 +6,10 @@ app = Flask(__name__)
 ALLOWED_DIR = "."  # Limit file access to current folder
 
 def safe_filename(name):
-    # Allow only .txt files with alphanumeric, underscore, dash
-    if re.fullmatch(r"[a-zA-Z0-9_\-]+\.txt", name):
+    print(f"🔎 Requested filename: {name}")
+    if name.endswith(".txt"):
         return name
+    print("❌ Rejected filename")
     return None
 
 @app.route("/file/<filename>", methods=["GET"])
@@ -31,3 +32,4 @@ def put_file(filename):
     with open(path, "w", encoding="utf-8") as f:
         f.write(request.data.decode("utf-8"))
     return f"{safe_name} updated."
+
