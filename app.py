@@ -20,3 +20,9 @@ def update_file():
 @app.route("/", methods=["GET"])
 def index():
     return "✅ Flask file server is running."
+
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
