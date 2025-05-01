@@ -1,28 +1,33 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_from_directory
 import os
+import re
 
 app = Flask(__name__)
-DATA_FILE = "data.txt"
+ALLOWED_DIR = "."  # Limit file access to current folder
 
-@app.route("/data.txt", methods=["GET"])
-def get_file():
-    if not os.path.exists(DATA_FILE):
-        return Response("File not found.", status=404)
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
+def safe_filename(name):
+    # Allow only .txt files with alphanumeric, underscore, dash
+    if re.fullmatch(r"[a-zA-Z0-9_\-]+\.txt", name):
+        return name
+    return None
+
+@app.route("/file/<filename>", methods=["GET"])
+def get_file(filename):
+    safe_name = safe_filename(filename)
+    if not safe_name:
+        return Response("Invalid filename", status=400)
+    path = os.path.join(ALLOWED_DIR, safe_name)
+    if not os.path.exists(path):
+        return Response("File not found", status=404)
+    with open(path, "r", encoding="utf-8") as f:
         return Response(f.read(), mimetype="text/plain")
 
-@app.route("/data.txt", methods=["PUT"])
-def update_file():
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+@app.route("/file/<filename>", methods=["PUT"])
+def put_file(filename):
+    safe_name = safe_filename(filename)
+    if not safe_name:
+        return Response("Invalid filename", status=400)
+    path = os.path.join(ALLOWED_DIR, safe_name)
+    with open(path, "w", encoding="utf-8") as f:
         f.write(request.data.decode("utf-8"))
-    return "File updated."
-
-@app.route("/", methods=["GET"])
-def index():
-    return "✅ Flask file server is running."
-
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    return f"{safe_name} updated."
